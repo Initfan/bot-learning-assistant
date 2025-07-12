@@ -14,6 +14,26 @@ app.post("", (req, res) => {
 	if (update.message && update.message.text) {
 		const chatId = update.message.chat.id;
 		const text = update.message.text;
+
+		switch (text) {
+			case "/start":
+				sendMessage(
+					chatId,
+					"Hello, I'm Giru Your language assistant, what can i help?\n/help to see commands"
+				);
+				break;
+			case "/help":
+				sendMessage(
+					chatId,
+					`Giru bot commands list
+					/start -> to start chat with giru bot.
+					/help -> to get all about giru bot and available commands
+					/learn -> to start learn a languages`
+				);
+				break;
+			default:
+				sendMessage(chatId, `Type /help to see available commands`);
+		}
 	}
 
 	res.sendStatus(200);
