@@ -25,11 +25,13 @@ app.post("", (req, res) => {
 			case "/help":
 				sendMessage(
 					chatId,
-					`Giru bot commands list
-					/start -> to start chat with giru bot.
-					/help -> to get all about giru bot and available commands
-					/learn -> to start learn a languages`
+					`<b>Giru</b> bot commands list
+					<b>/start</b> &#8594; <i>start chat with giru bot</i>
+					<b>/help</b> &#8594; <i>List of available command</i>
+					<b>/learn</b> &#8594; <i>learn a languages</i>`
 				);
+			case "/learn":
+				sendMessage(chatId, `What langugaes do you want to learn?`);
 				break;
 			default:
 				sendMessage(chatId, `Type /help to see available commands`);

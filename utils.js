@@ -21,6 +21,7 @@ export const sendMessage = async (chatId, text) => {
 		body: JSON.stringify({
 			chat_id: chatId,
 			text: text,
+			parse_mode: "HTML",
 		}),
 	});
 
