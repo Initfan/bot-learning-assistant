@@ -6,10 +6,8 @@ const app = e();
 
 app.use(bodyParser.json());
 
-app.post("", (req, res) => {
+app.post("", async (req, res) => {
 	const update = req.body;
-
-	console.log("Received Telegram update:", update);
 
 	if (update.message && update.message.text) {
 		const chatId = update.message.chat.id;
@@ -17,21 +15,54 @@ app.post("", (req, res) => {
 
 		switch (text) {
 			case "/start":
-				sendMessage(
+				sendMessage({
 					chatId,
-					"Hello, I'm Giru Your language assistant, what can i help?\n/help to see commands"
-				);
+					text: "Hello, I'm Giru Your language assistant, what can i help?\n/help to see commands",
+				});
 				break;
 			case "/help":
-				sendMessage(
+				sendMessage({
 					chatId,
-					`<b>Giru</b> bot commands list
+					text: `<b>Giru</b> bot commands list
 					<b>/start</b> &#8594; <i>start chat with giru bot</i>
 					<b>/help</b> &#8594; <i>List of available command</i>
-					<b>/learn</b> &#8594; <i>learn a languages</i>`
-				);
+					<b>/learn</b> &#8594; <i>learn a languages</i>`,
+				});
+				break;
 			case "/learn":
-				sendMessage(chatId, `What langugaes do you want to learn?`);
+				const res = await sendMessage({
+					chatId,
+					text: `What languages do you want to learn? \n1. Japanese\n2. Korean\n3. Chinese\n4. English\n5. Spanish`,
+					reply_markup: {
+						inline_keyboard: [
+							[
+								{
+									text: "1",
+									callback_data: "learn_japanese",
+								},
+								{
+									text: "2",
+									callback_data: "learn_korean",
+								},
+								{
+									text: "3",
+									callback_data: "learn_chinese",
+								},
+							],
+							[
+								{
+									text: "4",
+									callback_data: "learn_english",
+								},
+								{
+									text: "5",
+									callback_data: "learn_spanish",
+								},
+							],
+						],
+					},
+				});
+				console.log(res);
 				break;
 			default:
 				sendMessage(chatId, `Type /help to see available commands`);

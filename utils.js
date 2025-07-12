@@ -12,7 +12,12 @@ export const setWebhook = async (url) => {
 	return response.json();
 };
 
-export const sendMessage = async (chatId, text) => {
+export const sendMessage = async ({
+	chatId,
+	text,
+	reply_markup,
+	parse_mode,
+}) => {
 	const response = await fetch(`${endpoint}/sendMessage`, {
 		method: "POST",
 		headers: {
@@ -21,7 +26,8 @@ export const sendMessage = async (chatId, text) => {
 		body: JSON.stringify({
 			chat_id: chatId,
 			text: text,
-			parse_mode: "HTML",
+			parse_mode: parse_mode ?? "HTML",
+			reply_markup,
 		}),
 	});
 
