@@ -10,11 +10,13 @@ const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 type LanguageLearn = {
 	language: "japanese" | "korean" | "chinese" | "arabic" | "hindi" | null;
 	topic: "conversation" | "grammar" | "vocabulary" | null;
+	learningHistory: Content[];
 };
 
 const learningOptions: LanguageLearn = {
 	language: null,
 	topic: null,
+	learningHistory: [],
 };
 
 bot.setMyCommands([
@@ -55,8 +57,6 @@ const config: GenerateContentConfig = {
 	},
 };
 
-const questionHistory: Content[] = [];
-
 bot.on("message", async (msg) => {
 	if (msg.text.startsWith("/")) return;
 
@@ -76,12 +76,12 @@ bot.on("message", async (msg) => {
 
 	const chat = ai.chats.create({
 		model: "gemini-2.5-flash",
-		history: questionHistory,
+		history: learningOptions.learningHistory,
 		config,
 	});
 
 	const response = await chat.sendMessage({ message: msg.text });
-	questionHistory.push(
+	learningOptions.learningHistory.push(
 		{ role: "user", parts: [{ text: msg.text }] },
 		{ role: "model", parts: [{ text: response.text }] }
 	);
@@ -92,6 +92,7 @@ bot.on("message", async (msg) => {
 bot.onText(/\/cancel/, (msg) => {
 	learningOptions.language = null;
 	learningOptions.topic = null;
+	learningOptions.learningHistory = [];
 	bot.sendMessage(
 		msg.chat.id,
 		"Learning session cancelled. /learn to start again."
@@ -218,7 +219,7 @@ bot.on("callback_query", async (query) => {
 			config,
 		});
 
-		questionHistory.push({
+		learningOptions.learningHistory.push({
 			role: "model",
 			parts: [{ text: response.text }],
 		});
