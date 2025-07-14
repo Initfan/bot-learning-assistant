@@ -17,6 +17,15 @@ const learningOptions: LanguageLearn = {
 	topic: null,
 };
 
+bot.onText(/\/cancel/, (msg) => {
+	learningOptions.language = null;
+	learningOptions.topic = null;
+	bot.sendMessage(
+		msg.chat.id,
+		"Learning session cancelled. /learn to start again."
+	);
+});
+
 bot.onText(/\/start/, (msg) => {
 	bot.sendMessage(
 		msg.chat.id,
@@ -123,24 +132,46 @@ bot.on("callback_query", async (query) => {
 			...responseMessage,
 			parse_mode: "HTML",
 		});
-	} else if (query.data.startsWith("topic") && learningOptions.language) {
+	} else if (query.data.startsWith("topic")) {
+		if (!learningOptions.language)
+			return bot.sendMessage(
+				chatId,
+				"Please select a language using /learn command."
+			);
+
 		learningOptions.topic = query.data.replace(
 			"topic_",
 			""
 		) as LanguageLearn["topic"];
+		bot.sendChatAction(chatId, "typing");
+		await new Promise((resolve) => setTimeout(resolve, 3000));
 		const response = await ai.models.generateContent({
 			contents:
 				"Generate one question in Japanese with romaji and English translation",
 			model: "gemini-2.5-flash",
 			config: {
+				systemInstruction: `You are a language learning assistant. You help users learn ${learningOptions.language} on the topic of ${learningOptions.topic}.
+				if the user topic is conversation, generate a question in ${learningOptions.language} with romaji and English translation. explain each word in the question.
+				the respond should be in the format: 
+
+				${learningOptions.language} conversation:
+
+				${learningOptions.language}: <question in ${learningOptions.language}>
+				Romaji: <romaji version of the question>
+				English: <English translation of the question>
+
+				Explanation:
+				explain each word in the question in a separate line.
+				`,
 				thinkingConfig: {
 					thinkingBudget: 0,
 				},
 			},
 		});
-		bot.sendMessage(chatId, response.text, {
-			parse_mode: "MarkdownV2",
-		});
+		bot.sendMessage(
+			chatId,
+			`${response.text}\n\nYou can reply the bot with english, romaji or ${learningOptions.language} to continue the conversation.`
+		);
 	}
 });
 
