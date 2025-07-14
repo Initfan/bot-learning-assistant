@@ -58,7 +58,6 @@ const config: GenerateContentConfig = {
 const questionHistory: Content[] = [];
 
 bot.on("message", async (msg) => {
-	console.log(questionHistory);
 	if (msg.text.startsWith("/")) return;
 
 	if (!learningOptions.language)
@@ -146,10 +145,16 @@ bot.onText(/\/learn/, (msg) => {
 bot.onText(/\/help/, (msg) => {
 	bot.sendMessage(
 		msg.chat.id,
-		`<b>Giru</b> bot commands list
-		<b>/start</b> &#8594; <i>start chat with giru bot</i>
-		<b>/help</b> &#8594; <i>List of available command</i>
-		<b>/learn</b> &#8594; <i>learn a languages</i>`,
+		`<b>🤖 Welcome to the Learning Bot!</b>\!\n` +
+			"Ready to learn something new? Here’s what you can do:\n\n" +
+			"<b>/start</b> – ✨ <i>Let’s begin!</i>\n" +
+			"Starts the bot and gives you a welcome message. You'll see options to choose your topic and level.\n\n" +
+			"<b>/help</b> – ❓ <i>Need some help?</i>\n" +
+			"Shows you how to use the bot, all available commands, and how to get started with learning.\n\n" +
+			"<b>/learn</b> – 📚 <i>Start learning now</i>\n" +
+			"Begin an interactive learning session.\n\n" +
+			"<b>/cancel</b> – 🛑 <i>Take a break</i>\n" +
+			"Stops the current session anytime. You can start again whenever you're ready.",
 		{
 			parse_mode: "HTML",
 		}
