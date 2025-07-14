@@ -17,6 +17,25 @@ const learningOptions: LanguageLearn = {
 	topic: null,
 };
 
+bot.setMyCommands([
+	{
+		command: "/start",
+		description: "Starts the bot and shows a welcome message.",
+	},
+	{
+		command: "/help",
+		description: "Shows all the commands and how to use the bot.",
+	},
+	{
+		command: "/learn",
+		description: "Begins a fun and interactive learning session.",
+	},
+	{
+		command: "/cancel",
+		description: "Ends the current session if you want to take a break.",
+	},
+]);
+
 const config: GenerateContentConfig = {
 	systemInstruction: `You are a language learning assistant. You help users learn ${learningOptions.language} on the topic of ${learningOptions.topic}.
 		if the user topic is conversation, generate a question in ${learningOptions.language} with romaji and English translation. explain each word in the question.
