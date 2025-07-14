@@ -1,5 +1,5 @@
 import e from "express";
-import TelegramBot from "node-telegram-bot-api";
+import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
 import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
 dotenv.config();
@@ -41,17 +41,28 @@ bot.setMyCommands([
 const config: GenerateContentConfig = {
 	systemInstruction: `You are a language learning assistant. You help users learn ${learningOptions.language} on the topic of ${learningOptions.topic}.
 
-		if the user topic is conversation, generate a question in ${learningOptions.language} with romaji and English translation. explain each word in the question.
+		if the user topic is conversation, generate a question in ${learningOptions.language} with Pronunciation and english translation. explain each word in the question, send user information about the type of reply.
 		the respond should be in the format: 
 
 		${learningOptions.language} conversation:
 
 		${learningOptions.language}: <question in ${learningOptions.language}>
 		Pronunciation: <Pronunciation version of the question>
-		English: <English translation of the question>
+		Meaning: <English translation of the question>
 
 		Explanation:
 		explain each word in the question in a separate line.
+
+		You can reply the bot with english, romaji or ${learningOptions.language} to continue the conversation.
+
+		if the user topic is vocabulary, create 10 vocabulary data with ${learningOptions.language}, pronunciation and english.
+		the respond should be in the format:
+
+		${learningOptions.language} Vocabulary:
+
+		<number>. <vocabulary in ${learningOptions.language}>
+		pronunciation: <Pronunciation version of the vocabulary>
+		meaning: <English translation of the question>
 		`,
 	thinkingConfig: {
 		thinkingBudget: 0,
@@ -64,7 +75,7 @@ bot.on("message", async (msg) => {
 	if (!learningOptions.language)
 		return bot.sendMessage(
 			msg.chat.id,
-			"Please select a language to learn using /learn command."
+			"Please select a topic to learn using /learn command."
 		);
 
 	if (!learningOptions.topic)
@@ -91,7 +102,6 @@ bot.on("message", async (msg) => {
 });
 
 bot.onText(/\/cancel/, (msg) => {
-	learningOptions.language = null;
 	learningOptions.topic = null;
 	learningOptions.learningHistory = [];
 	bot.sendMessage(
@@ -113,7 +123,7 @@ bot.onText(/\/learn/, (msg) => {
 		`Hello ${msg.from.username} 👋, Let's start learning 📚 \nSelect the topic you want:\n\n` +
 			"1. Conversation\n" +
 			"2. Grammar\n" +
-			"3. Vocalbulary\n",
+			"3. Vocabulary\n",
 		{
 			parse_mode: "HTML",
 			reply_markup: {
@@ -173,8 +183,18 @@ bot.on("callback_query", async (query) => {
 		) as LanguageLearn["topic"];
 		bot.sendChatAction(chatId, "typing");
 
+		let content: string;
+		switch (query.data.split("_")[1]) {
+			case "conversation":
+				content = "conversation topic";
+				break;
+			case "vocabulary":
+				content = "vocabulary topic";
+				break;
+		}
+
 		const response = await ai.models.generateContent({
-			contents: `Generate one question in ${learningOptions.language} with romaji and English translation`,
+			contents: content,
 			model: "gemini-2.5-flash",
 			config,
 		});
@@ -184,10 +204,7 @@ bot.on("callback_query", async (query) => {
 			parts: [{ text: response.text }],
 		});
 
-		bot.sendMessage(
-			chatId,
-			`${response.text}\n\nYou can reply the bot with english, romaji or ${learningOptions.language} to continue the conversation.`
-		);
+		bot.sendMessage(chatId, response.text);
 	}
 });
 
