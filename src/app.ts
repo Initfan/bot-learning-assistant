@@ -1,5 +1,5 @@
-import e from "express";
-import TelegramBot from "node-telegram-bot-api";
+import e, { response } from "express";
+import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -60,6 +60,45 @@ bot.onText(/\/help/, (msg) => {
 			parse_mode: "HTML",
 		}
 	);
+});
+
+bot.on("callback_query", (query) => {
+	console.log(query);
+	const chatId = query.message.chat.id;
+
+	if (query.data.startsWith("learn")) {
+		let responseMessage: { text: string } & SendMessageOptions;
+
+		switch (query.data) {
+			case "learn_japanese":
+				responseMessage = {
+					text:
+						"<b>You selected Japanese. Let's start learning!</b>\n" +
+						"<i>Choose the topic you want:</i>\n\n" +
+						"1. Conversation\n",
+					reply_markup: {
+						inline_keyboard: [
+							[
+								{
+									text: "1",
+									callback_data: "conversation",
+								},
+							],
+						],
+					},
+				};
+				break;
+			default:
+				responseMessage = {
+					text: "Unknown selection. Please try again.",
+				};
+		}
+
+		bot.sendMessage(chatId, responseMessage.text, {
+			...responseMessage,
+			parse_mode: "HTML",
+		});
+	}
 });
 
 const app = e();
