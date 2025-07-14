@@ -1,8 +1,10 @@
-import e, { response } from "express";
+import e from "express";
 import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
+import { GoogleGenAI } from "@google/genai";
 dotenv.config();
 
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 bot.onText(/\/start/, (msg) => {
@@ -62,8 +64,7 @@ bot.onText(/\/help/, (msg) => {
 	);
 });
 
-bot.on("callback_query", (query) => {
-	console.log(query);
+bot.on("callback_query", async (query) => {
 	const chatId = query.message.chat.id;
 
 	if (query.data.startsWith("learn")) {
@@ -97,6 +98,22 @@ bot.on("callback_query", (query) => {
 		bot.sendMessage(chatId, responseMessage.text, {
 			...responseMessage,
 			parse_mode: "HTML",
+		});
+	} else if (query.data === "conversation") {
+		console.log(query.data);
+		const response = await ai.models.generateContent({
+			contents:
+				"Generate one question in Japanese with romaji and English translation",
+			model: "gemini-2.5-flash",
+			config: {
+				thinkingConfig: {
+					thinkingBudget: 0,
+				},
+			},
+		});
+		console.log(response);
+		bot.sendMessage(chatId, response.text, {
+			parse_mode: "MarkdownV2",
 		});
 	}
 });
