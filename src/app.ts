@@ -7,6 +7,16 @@ dotenv.config();
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
+type LanguageLearn = {
+	language: "japanese" | "korean" | "chinese" | "english" | "spanish" | null;
+	topic: "conversation" | "grammar" | "vocabulary" | null;
+};
+
+const learningOptions: LanguageLearn = {
+	language: null,
+	topic: null,
+};
+
 bot.onText(/\/start/, (msg) => {
 	bot.sendMessage(
 		msg.chat.id,
@@ -68,6 +78,10 @@ bot.on("callback_query", async (query) => {
 	const chatId = query.message.chat.id;
 
 	if (query.data.startsWith("learn")) {
+		learningOptions.language = query.data.replace(
+			"learn_",
+			""
+		) as LanguageLearn["language"];
 		let responseMessage: { text: string } & SendMessageOptions;
 
 		switch (query.data) {
@@ -76,13 +90,23 @@ bot.on("callback_query", async (query) => {
 					text:
 						"<b>You selected Japanese. Let's start learning!</b>\n" +
 						"<i>Choose the topic you want:</i>\n\n" +
-						"1. Conversation\n",
+						"1. Conversation\n" +
+						"2. Grammar\n" +
+						"3. Vocalbulary\n",
 					reply_markup: {
 						inline_keyboard: [
 							[
 								{
 									text: "1",
-									callback_data: "conversation",
+									callback_data: "topic_conversation",
+								},
+								{
+									text: "2",
+									callback_data: "topic_grammar",
+								},
+								{
+									text: "3",
+									callback_data: "topic_vocabulary",
 								},
 							],
 						],
@@ -99,8 +123,11 @@ bot.on("callback_query", async (query) => {
 			...responseMessage,
 			parse_mode: "HTML",
 		});
-	} else if (query.data === "conversation") {
-		console.log(query.data);
+	} else if (query.data.startsWith("topic") && learningOptions.language) {
+		learningOptions.topic = query.data.replace(
+			"topic_",
+			""
+		) as LanguageLearn["topic"];
 		const response = await ai.models.generateContent({
 			contents:
 				"Generate one question in Japanese with romaji and English translation",
@@ -111,7 +138,6 @@ bot.on("callback_query", async (query) => {
 				},
 			},
 		});
-		console.log(response);
 		bot.sendMessage(chatId, response.text, {
 			parse_mode: "MarkdownV2",
 		});
