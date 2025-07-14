@@ -1,5 +1,5 @@
 import e from "express";
-import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
+import TelegramBot from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
 import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
 dotenv.config();
@@ -8,7 +8,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 type LanguageLearn = {
-	language: "japanese" | "korean" | "chinese" | "arabic" | "hindi" | null;
+	language: "japanese";
 	topic: "conversation" | "grammar" | "vocabulary" | null;
 	learningHistory: Content[];
 };
@@ -55,7 +55,7 @@ const config: GenerateContentConfig = {
 
 		You can reply the bot with english, romaji or ${learningOptions.language} to continue the conversation.
 
-		if the user topic is vocabulary, create 10 vocabulary data with ${learningOptions.language}, pronunciation and english.
+		if the user topic is vocabulary, create 10 vocabulary data with ${learningOptions.language}, pronunciation and english, /more information.
 		the respond should be in the format:
 
 		${learningOptions.language} Vocabulary:
@@ -63,6 +63,8 @@ const config: GenerateContentConfig = {
 		<number>. <vocabulary in ${learningOptions.language}>
 		pronunciation: <Pronunciation version of the vocabulary>
 		meaning: <English translation of the question>
+
+		/more for more vocabulary
 		`,
 	thinkingConfig: {
 		thinkingBudget: 0,
@@ -70,18 +72,12 @@ const config: GenerateContentConfig = {
 };
 
 bot.on("message", async (msg) => {
-	if (msg.text.startsWith("/")) return;
-
-	if (!learningOptions.language)
-		return bot.sendMessage(
-			msg.chat.id,
-			"Please select a topic to learn using /learn command."
-		);
+	if (msg.text.startsWith("/") && !msg.text.startsWith("/more")) return;
 
 	if (!learningOptions.topic)
 		return bot.sendMessage(
 			msg.chat.id,
-			`You are learning ${learningOptions.language}. Please select a topic.`
+			"Please select a topic to learn using /learn command."
 		);
 
 	bot.sendChatAction(msg.chat.id, "typing");
