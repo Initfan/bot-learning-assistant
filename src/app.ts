@@ -8,7 +8,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 type LanguageLearn = {
-	language: "japanese" | "korean" | "chinese" | "english" | "spanish" | null;
+	language: "japanese" | "korean" | "chinese" | "arabic" | "hindi" | null;
 	topic: "conversation" | "grammar" | "vocabulary" | null;
 };
 
@@ -108,7 +108,7 @@ bot.onText(/\/start/, (msg) => {
 bot.onText(/\/learn/, (msg) => {
 	bot.sendMessage(
 		msg.chat.id,
-		"What languages do you want to learn? \n1. Japanese\n2. Korean\n3. Chinese\n4. English\n5. Spanish",
+		"What languages do you want to learn? \n1. Japanese\n2. Korean\n3. Chinese\n4. Arabic\n5. Hindi",
 		{
 			reply_markup: {
 				inline_keyboard: [
@@ -129,11 +129,11 @@ bot.onText(/\/learn/, (msg) => {
 					[
 						{
 							text: "4",
-							callback_data: "learn_english",
+							callback_data: "learn_arabic",
 						},
 						{
 							text: "5",
-							callback_data: "learn_spanish",
+							callback_data: "learn_hindi",
 						},
 					],
 				],
@@ -169,47 +169,36 @@ bot.on("callback_query", async (query) => {
 			"learn_",
 			""
 		) as LanguageLearn["language"];
-		let responseMessage: { text: string } & SendMessageOptions;
 
-		switch (query.data) {
-			case "learn_japanese":
-				responseMessage = {
-					text:
-						"<b>You selected Japanese. Let's start learning!</b>\n" +
-						"<i>Choose the topic you want:</i>\n\n" +
-						"1. Conversation\n" +
-						"2. Grammar\n" +
-						"3. Vocalbulary\n",
-					reply_markup: {
-						inline_keyboard: [
-							[
-								{
-									text: "1",
-									callback_data: "topic_conversation",
-								},
-								{
-									text: "2",
-									callback_data: "topic_grammar",
-								},
-								{
-									text: "3",
-									callback_data: "topic_vocabulary",
-								},
-							],
+		bot.sendMessage(
+			chatId,
+			`You selected <b>${learningOptions.language}</b>. Let's start learning!\n` +
+				"Choose the topic you want:\n\n" +
+				"1. Conversation\n" +
+				"2. Grammar\n" +
+				"3. Vocalbulary\n",
+			{
+				parse_mode: "HTML",
+				reply_markup: {
+					inline_keyboard: [
+						[
+							{
+								text: "1",
+								callback_data: "topic_conversation",
+							},
+							{
+								text: "2",
+								callback_data: "topic_grammar",
+							},
+							{
+								text: "3",
+								callback_data: "topic_vocabulary",
+							},
 						],
-					},
-				};
-				break;
-			default:
-				responseMessage = {
-					text: "Unknown selection. Please try again.",
-				};
-		}
-
-		bot.sendMessage(chatId, responseMessage.text, {
-			...responseMessage,
-			parse_mode: "HTML",
-		});
+					],
+				},
+			}
+		);
 	} else if (query.data.startsWith("topic")) {
 		if (!learningOptions.language)
 			return bot.sendMessage(
@@ -224,8 +213,7 @@ bot.on("callback_query", async (query) => {
 		bot.sendChatAction(chatId, "typing");
 		await new Promise((resolve) => setTimeout(resolve, 3000));
 		const response = await ai.models.generateContent({
-			contents:
-				"Generate one question in Japanese with romaji and English translation",
+			contents: `Generate one question in ${learningOptions.language} with romaji and English translation`,
 			model: "gemini-2.5-flash",
 			config,
 		});
