@@ -1,7 +1,7 @@
 import e from "express";
 import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
-import { GenerateContentConfig, GoogleGenAI } from "@google/genai";
+import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
 dotenv.config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
@@ -36,7 +36,10 @@ const config: GenerateContentConfig = {
 	},
 };
 
+const questionHistory: Content[] = [];
+
 bot.on("message", async (msg) => {
+	console.log(questionHistory);
 	if (msg.text.startsWith("/")) return;
 
 	if (!learningOptions.language)
@@ -53,11 +56,17 @@ bot.on("message", async (msg) => {
 
 	bot.sendChatAction(msg.chat.id, "typing");
 
-	const response = await ai.models.generateContent({
-		contents: msg.text,
+	const chat = ai.chats.create({
 		model: "gemini-2.5-flash",
+		history: questionHistory,
 		config,
 	});
+
+	const response = await chat.sendMessage({ message: msg.text });
+	questionHistory.push(
+		{ role: "user", parts: [{ text: msg.text }] },
+		{ role: "model", parts: [{ text: response.text }] }
+	);
 
 	bot.sendMessage(msg.chat.id, response.text);
 });
@@ -195,6 +204,11 @@ bot.on("callback_query", async (query) => {
 				"Generate one question in Japanese with romaji and English translation",
 			model: "gemini-2.5-flash",
 			config,
+		});
+
+		questionHistory.push({
+			role: "model",
+			parts: [{ text: response.text }],
 		});
 		bot.sendMessage(
 			chatId,
