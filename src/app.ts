@@ -1,5 +1,5 @@
 import e from "express";
-import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
+import TelegramBot from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
 import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
 dotenv.config();
@@ -14,7 +14,7 @@ type LanguageLearn = {
 };
 
 const learningOptions: LanguageLearn = {
-	language: null,
+	language: "japanese",
 	topic: null,
 	learningHistory: [],
 };
@@ -40,13 +40,14 @@ bot.setMyCommands([
 
 const config: GenerateContentConfig = {
 	systemInstruction: `You are a language learning assistant. You help users learn ${learningOptions.language} on the topic of ${learningOptions.topic}.
+
 		if the user topic is conversation, generate a question in ${learningOptions.language} with romaji and English translation. explain each word in the question.
 		the respond should be in the format: 
 
 		${learningOptions.language} conversation:
 
 		${learningOptions.language}: <question in ${learningOptions.language}>
-		Romaji: <romaji version of the question>
+		Pronunciation: <Pronunciation version of the question>
 		English: <English translation of the question>
 
 		Explanation:
@@ -109,32 +110,26 @@ bot.onText(/\/start/, (msg) => {
 bot.onText(/\/learn/, (msg) => {
 	bot.sendMessage(
 		msg.chat.id,
-		"What languages do you want to learn? \n1. Japanese\n2. Korean\n3. Chinese\n4. Arabic\n5. Hindi",
+		`Hello ${msg.from.username} 👋, Let's start learning 📚 \nSelect the topic you want:\n\n` +
+			"1. Conversation\n" +
+			"2. Grammar\n" +
+			"3. Vocalbulary\n",
 		{
+			parse_mode: "HTML",
 			reply_markup: {
 				inline_keyboard: [
 					[
 						{
 							text: "1",
-							callback_data: "learn_japanese",
+							callback_data: "topic_conversation",
 						},
 						{
 							text: "2",
-							callback_data: "learn_korean",
+							callback_data: "topic_grammar",
 						},
 						{
 							text: "3",
-							callback_data: "learn_chinese",
-						},
-					],
-					[
-						{
-							text: "4",
-							callback_data: "learn_arabic",
-						},
-						{
-							text: "5",
-							callback_data: "learn_hindi",
+							callback_data: "topic_vocabulary",
 						},
 					],
 				],
@@ -165,42 +160,7 @@ bot.onText(/\/help/, (msg) => {
 bot.on("callback_query", async (query) => {
 	const chatId = query.message.chat.id;
 
-	if (query.data.startsWith("learn")) {
-		learningOptions.language = query.data.replace(
-			"learn_",
-			""
-		) as LanguageLearn["language"];
-
-		bot.sendMessage(
-			chatId,
-			`You selected <b>${learningOptions.language}</b>. Let's start learning!\n` +
-				"Choose the topic you want:\n\n" +
-				"1. Conversation\n" +
-				"2. Grammar\n" +
-				"3. Vocalbulary\n",
-			{
-				parse_mode: "HTML",
-				reply_markup: {
-					inline_keyboard: [
-						[
-							{
-								text: "1",
-								callback_data: "topic_conversation",
-							},
-							{
-								text: "2",
-								callback_data: "topic_grammar",
-							},
-							{
-								text: "3",
-								callback_data: "topic_vocabulary",
-							},
-						],
-					],
-				},
-			}
-		);
-	} else if (query.data.startsWith("topic")) {
+	if (query.data.startsWith("topic")) {
 		if (!learningOptions.language)
 			return bot.sendMessage(
 				chatId,
@@ -212,7 +172,7 @@ bot.on("callback_query", async (query) => {
 			""
 		) as LanguageLearn["topic"];
 		bot.sendChatAction(chatId, "typing");
-		await new Promise((resolve) => setTimeout(resolve, 3000));
+
 		const response = await ai.models.generateContent({
 			contents: `Generate one question in ${learningOptions.language} with romaji and English translation`,
 			model: "gemini-2.5-flash",
@@ -223,6 +183,7 @@ bot.on("callback_query", async (query) => {
 			role: "model",
 			parts: [{ text: response.text }],
 		});
+
 		bot.sendMessage(
 			chatId,
 			`${response.text}\n\nYou can reply the bot with english, romaji or ${learningOptions.language} to continue the conversation.`
