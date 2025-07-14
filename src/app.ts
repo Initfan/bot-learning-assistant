@@ -1,7 +1,7 @@
 import e from "express";
 import TelegramBot, { SendMessageOptions } from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
+import { GenerateContentConfig, GoogleGenAI } from "@google/genai";
 dotenv.config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
@@ -16,6 +16,51 @@ const learningOptions: LanguageLearn = {
 	language: null,
 	topic: null,
 };
+
+const config: GenerateContentConfig = {
+	systemInstruction: `You are a language learning assistant. You help users learn ${learningOptions.language} on the topic of ${learningOptions.topic}.
+		if the user topic is conversation, generate a question in ${learningOptions.language} with romaji and English translation. explain each word in the question.
+		the respond should be in the format: 
+
+		${learningOptions.language} conversation:
+
+		${learningOptions.language}: <question in ${learningOptions.language}>
+		Romaji: <romaji version of the question>
+		English: <English translation of the question>
+
+		Explanation:
+		explain each word in the question in a separate line.
+		`,
+	thinkingConfig: {
+		thinkingBudget: 0,
+	},
+};
+
+bot.on("message", async (msg) => {
+	if (msg.text.startsWith("/")) return;
+
+	if (!learningOptions.language)
+		return bot.sendMessage(
+			msg.chat.id,
+			"Please select a language to learn using /learn command."
+		);
+
+	if (!learningOptions.topic)
+		return bot.sendMessage(
+			msg.chat.id,
+			`You are learning ${learningOptions.language}. Please select a topic.`
+		);
+
+	bot.sendChatAction(msg.chat.id, "typing");
+
+	const response = await ai.models.generateContent({
+		contents: msg.text,
+		model: "gemini-2.5-flash",
+		config,
+	});
+
+	bot.sendMessage(msg.chat.id, response.text);
+});
 
 bot.onText(/\/cancel/, (msg) => {
 	learningOptions.language = null;
@@ -149,24 +194,7 @@ bot.on("callback_query", async (query) => {
 			contents:
 				"Generate one question in Japanese with romaji and English translation",
 			model: "gemini-2.5-flash",
-			config: {
-				systemInstruction: `You are a language learning assistant. You help users learn ${learningOptions.language} on the topic of ${learningOptions.topic}.
-				if the user topic is conversation, generate a question in ${learningOptions.language} with romaji and English translation. explain each word in the question.
-				the respond should be in the format: 
-
-				${learningOptions.language} conversation:
-
-				${learningOptions.language}: <question in ${learningOptions.language}>
-				Romaji: <romaji version of the question>
-				English: <English translation of the question>
-
-				Explanation:
-				explain each word in the question in a separate line.
-				`,
-				thinkingConfig: {
-					thinkingBudget: 0,
-				},
-			},
+			config,
 		});
 		bot.sendMessage(
 			chatId,
