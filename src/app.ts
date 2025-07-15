@@ -8,13 +8,13 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 
 type LanguageLearn = {
-	language: "japanese";
+	language: "japanese" | "korea" | "chinese";
 	topic: "conversation" | "grammar" | "vocabulary" | null;
 	learningHistory: Content[];
 };
 
 const learningOptions: LanguageLearn = {
-	language: "japanese",
+	language: null,
 	topic: null,
 	learningHistory: [],
 };
@@ -53,7 +53,7 @@ const config: GenerateContentConfig = {
 		Explanation:
 		explain each word in the question in a separate line.
 
-		You can reply the bot with english, romaji or ${learningOptions.language} to continue the conversation.
+		You can reply the bot with english or ${learningOptions.language} to continue the conversation.
 
 		if the user topic is vocabulary, create 10 vocabulary data with ${learningOptions.language}, pronunciation and english, /more information.
 		the respond should be in the format:
@@ -98,6 +98,7 @@ bot.on("message", async (msg) => {
 });
 
 bot.onText(/\/cancel/, (msg) => {
+	learningOptions.language = null;
 	learningOptions.topic = null;
 	learningOptions.learningHistory = [];
 	bot.sendMessage(
@@ -116,26 +117,22 @@ bot.onText(/\/start/, (msg) => {
 bot.onText(/\/learn/, (msg) => {
 	bot.sendMessage(
 		msg.chat.id,
-		`Hello ${msg.from.username} 👋, Let's start learning 📚 \nSelect the topic you want:\n\n` +
-			"1. Conversation\n" +
-			"2. Grammar\n" +
-			"3. Vocabulary\n",
+		"Which language do you want to learn? \n1. Japanese\n2. Korean\n3. Chinese",
 		{
-			parse_mode: "HTML",
 			reply_markup: {
 				inline_keyboard: [
 					[
 						{
 							text: "1",
-							callback_data: "topic_conversation",
+							callback_data: "learn_japanese",
 						},
 						{
 							text: "2",
-							callback_data: "topic_grammar",
+							callback_data: "learn_korean",
 						},
 						{
 							text: "3",
-							callback_data: "topic_vocabulary",
+							callback_data: "learn_chinese",
 						},
 					],
 				],
@@ -166,7 +163,41 @@ bot.onText(/\/help/, (msg) => {
 bot.on("callback_query", async (query) => {
 	const chatId = query.message.chat.id;
 
-	if (query.data.startsWith("topic")) {
+	if (query.data.startsWith("learn")) {
+		learningOptions.language = query.data.replace(
+			"learn_",
+			""
+		) as LanguageLearn["language"];
+
+		bot.sendMessage(
+			chatId,
+			`Hello ${query.message.chat.username} 👋, Let's start learning ${learningOptions.language} 📚 \nSelect the topic you want:\n\n` +
+				"1. Conversation\n" +
+				"2. Grammar\n" +
+				"3. Vocabulary\n",
+			{
+				reply_markup: {
+					inline_keyboard: [
+						[
+							{
+								text: "1",
+								callback_data: "topic_conversation",
+							},
+							{
+								text: "2",
+								callback_data: "topic_grammar",
+							},
+							{
+								text: "3",
+								callback_data: "topic_vocabulary",
+							},
+						],
+					],
+				},
+			}
+		);
+	} else if (query.data.startsWith("topic")) {
+		console.log(learningOptions);
 		if (!learningOptions.language)
 			return bot.sendMessage(
 				chatId,
@@ -179,13 +210,14 @@ bot.on("callback_query", async (query) => {
 		) as LanguageLearn["topic"];
 		bot.sendChatAction(chatId, "typing");
 
+		console.log(learningOptions);
 		let content: string;
 		switch (query.data.split("_")[1]) {
 			case "conversation":
-				content = "conversation topic";
+				content = `learn ${learningOptions.language} conversation`;
 				break;
 			case "vocabulary":
-				content = "vocabulary topic";
+				content = `learn ${learningOptions.language} vocabulary`;
 				break;
 		}
 
