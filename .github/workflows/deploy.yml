@@ -32,7 +32,7 @@ jobs:
         run: "npm install"
 
       - name: Build step
-        run: "npm start"
+        run: "npx tsx src/app.ts"
 
       - name: Upload to Deno Deploy
         uses: denoland/deployctl@v1
