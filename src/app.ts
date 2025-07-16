@@ -2,10 +2,15 @@ import e from "express";
 import TelegramBot from "node-telegram-bot-api";
 import * as dotenv from "dotenv";
 import { Content, GenerateContentConfig, GoogleGenAI } from "@google/genai";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 dotenv.config();
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_KEY });
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 type LanguageLearn = {
 	language: "japanese" | "korea" | "chinese";
@@ -17,6 +22,16 @@ const learningOptions: LanguageLearn = {
 	language: null,
 	topic: null,
 	learningHistory: [],
+};
+
+type grammar = {
+	messageId: number;
+	order: number;
+};
+
+const grammarContent: grammar = {
+	messageId: null,
+	order: 0,
 };
 
 bot.setMyCommands([
@@ -197,7 +212,6 @@ bot.on("callback_query", async (query) => {
 			}
 		);
 	} else if (query.data.startsWith("topic")) {
-		console.log(learningOptions);
 		if (!learningOptions.language)
 			return bot.sendMessage(
 				chatId,
@@ -210,7 +224,44 @@ bot.on("callback_query", async (query) => {
 		) as LanguageLearn["topic"];
 		bot.sendChatAction(chatId, "typing");
 
-		console.log(learningOptions);
+		if (learningOptions.topic == "grammar") {
+			return fs.readFile(
+				__dirname + "/japanese-grammar.txt",
+				"utf-8",
+				async (err, data) => {
+					if (err) return;
+					const message = await bot.sendMessage(
+						chatId,
+						"Here is a list of grammar-related lessons you need to learn.\n" +
+							`<b>1/${data.split("next").length}</b>` +
+							data.split("next")[0],
+						{
+							parse_mode: "HTML",
+							reply_markup: {
+								inline_keyboard: [
+									[
+										{
+											text: "Prev",
+											callback_data: "button_prev",
+										},
+										{
+											text: "Learn",
+											callback_data: "button_learn",
+										},
+										{
+											text: "Next",
+											callback_data: "button_next",
+										},
+									],
+								],
+							},
+						}
+					);
+					grammarContent.messageId = message.message_id;
+				}
+			);
+		}
+
 		let content: string;
 		switch (query.data.split("_")[1]) {
 			case "conversation":
@@ -233,6 +284,56 @@ bot.on("callback_query", async (query) => {
 		});
 
 		bot.sendMessage(chatId, response.text);
+	} else if (query.data.startsWith("button")) {
+		if (!learningOptions.language)
+			return bot.sendMessage(
+				chatId,
+				"Please select a language using /learn command."
+			);
+
+		fs.readFile(
+			__dirname + "/japanese-grammar.txt",
+			"utf-8",
+			(err, data) => {
+				query.data == "button_next" &&
+				grammarContent.order < data.split("next").length - 1
+					? grammarContent.order++
+					: query.data == "button_prev" &&
+					  grammarContent.order > 0 &&
+					  grammarContent.order--;
+
+				bot.editMessageText(
+					"Here is a list of grammar-related lessons you need to learn.\n" +
+						`<b>${grammarContent.order + 1}/${
+							data.split("next").length
+						}</b>` +
+						data.split("next")[grammarContent.order],
+					{
+						chat_id: chatId,
+						message_id: grammarContent.messageId,
+						parse_mode: "HTML",
+						reply_markup: {
+							inline_keyboard: [
+								[
+									{
+										text: "Prev",
+										callback_data: "button_prev",
+									},
+									{
+										text: "Learn",
+										callback_data: "button_learn",
+									},
+									{
+										text: "Next",
+										callback_data: "button_next",
+									},
+								],
+							],
+						},
+					}
+				);
+			}
+		);
 	}
 });
 
