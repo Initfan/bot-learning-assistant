@@ -1,0 +1,97 @@
+
+
+1. Basic Sentence Structure: Subject–Object–Verb (SOV)
+Korean sentences usually follow:
+
+Subject + Object + Verb
+
+Example:
+
+나는 사과를 먹어요.
+naneun sagwareul meogeoyo.
+→ I eat an apple.
+("I + apple + eat")
+next
+
+2. Particles (조사)
+Particles indicate the grammatical function of words. Most common ones:
+
+&#8594; 나는 학생이에요.
+Naneun haksaeng-ieyo.
+I’m a student.
+(은/는 – topic marker)
+
+&#8594; 친구가 왔어요.
+Chinguga wasseoyo.
+(Friend came.)
+(이/가 – subject marker)
+
+&#8594; 사과를 먹어요.
+Sagwareul meogeoyo.
+(Eat an apple.)
+(을/를 – object marker)
+
+&#8594; 학교에 가요.
+Hakgyoe gayo.
+(Go to school.)
+(에 – time/place marker)
+
+&#8594; 집에서 공부해요.
+Jibeseo gongbuhaeyo.
+(Study at home.)
+(에서 – action location marker)
+
+&#8594; 친구랑 가요.
+Chingurang gayo.
+(Go with a friend.)
+(랑 – “and” / “with” particle)
+next
+
+3. Verb Endings
+No verb conjugation by subject. Instead, conjugation reflects formality and tense.
+
+Tense	Informal Polite	Formal
+Present	먹어요 (eat)	먹습니다
+Past	먹었어요 (ate)	먹었습니다
+Future	먹을 거예요 (will eat)	먹겠습니다
+
+Negative:
+
+안 먹어요 = don’t eat
+
+못 먹어요 = can’t eat
+next
+
+4. Adjectives = Verbs
+In Korean, adjectives act like verbs and conjugate:
+
+작다 (to be small) &#8594; 작아요
+
+예쁘다 (to be pretty) &#8594; 예뻐요
+
+비싸다 (to be expensive) &#8594; 비싸요
+next
+
+5. Honorifics and Politeness
+Korean grammar changes based on respect:
+
+&#8594; 요 ending = polite
+
+&#8594; 습니다 = formal polite
+
+반말 (informal) used with close friends, younger people
+next
+
+6. Questions
+Add a rising tone or 요 ending:
+
+어디에 가요? – Where are you going?
+
+뭐 먹어요? – What are you eating?
+
+7. Conjugation Patterns
+고 – and (connects verbs): 먹고 마셔요
+
+지만 – but: 좋지만 비싸요
+
+니까 – because: 바쁘니까 못 가요
