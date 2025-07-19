@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 type LanguageLearn = {
-	language: "japanese" | "korea" | "chinese";
+	language: "japanese" | "korean" | "chinese";
 	topic: "conversation" | "grammar" | "vocabulary" | null;
 	learningHistory: Content[];
 };
@@ -226,7 +226,7 @@ bot.on("callback_query", async (query) => {
 
 		if (learningOptions.topic == "grammar") {
 			return fs.readFile(
-				__dirname + "/japanese-grammar.txt",
+				__dirname + `/${learningOptions.language}-grammar.txt`,
 				"utf-8",
 				async (err, data) => {
 					if (err) return;
@@ -243,10 +243,6 @@ bot.on("callback_query", async (query) => {
 										{
 											text: "Prev",
 											callback_data: "button_prev",
-										},
-										{
-											text: "Learn",
-											callback_data: "button_learn",
 										},
 										{
 											text: "Next",
@@ -292,7 +288,7 @@ bot.on("callback_query", async (query) => {
 			);
 
 		fs.readFile(
-			__dirname + "/japanese-grammar.txt",
+			__dirname + `/${learningOptions.language}-grammar.txt`,
 			"utf-8",
 			(err, data) => {
 				query.data == "button_next" &&
